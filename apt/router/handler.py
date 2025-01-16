@@ -1,8 +1,8 @@
-from inspect import isclass
-from logging import warn
+from logging import warning
 from typing import Any, Callable, Coroutine
 from aiohttp.web import (
     get,
+    head,
     post,
     delete,
     put,
@@ -72,5 +72,7 @@ class Handler:
                 return put(self.path(), self.into_handle())
             case "patch":
                 return patch(self.path(), self.into_handle())
-        warn(f"Unknown method: {self.method()}")
+            case "head":
+                return head(self.path(), self.into_handle())
+        warning(f"Unknown method: {self.method()}")
         return get(self.path(), self.into_handle())

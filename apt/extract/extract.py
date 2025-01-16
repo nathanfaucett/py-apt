@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Type, TypeGuard
+from typing import Any, TypeGuard
 from aiohttp.web import Request, Response
 from result import Result
 
