@@ -6,6 +6,8 @@ from apt.router.handler import Handler
 
 from msgspec import Struct
 
+from apt.router.router import Router
+
 
 class User(Struct):
     name: str
@@ -19,13 +21,11 @@ async def echo(user_json: JSON[User]) -> Response:
 
 
 def main():
+    router = Router()
+    router.add(echo)
+
     app = Application()
-
-    handler = Handler(echo)
-    handle = handler.into_handle()
-
-    app.add_routes([post(handler.path(), handle)])
-
+    app.add_routes(router.into_routes())
     run_app(app)
 
 

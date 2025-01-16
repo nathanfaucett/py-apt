@@ -1,8 +1,17 @@
 from inspect import isclass
 from logging import warn
 from typing import Any, Callable, Coroutine
-from aiohttp.web import Request, Response
-from result import Err, Ok, Result, is_err
+from aiohttp.web import (
+    get,
+    post,
+    delete,
+    put,
+    patch,
+    Request,
+    Response,
+    AbstractRouteDef,
+)
+from result import Ok, Result, is_err
 
 from apt.extract.extract import Extract
 from apt.router.handler_options import HandlerOptions
@@ -50,3 +59,18 @@ class Handler:
             return await self.handle(request)
 
         return handle
+
+    def into_route(self) -> AbstractRouteDef:
+        match self.method():
+            case "get":
+                return get(self.path(), self.into_handle())
+            case "post":
+                return post(self.path(), self.into_handle())
+            case "delete":
+                return delete(self.path(), self.into_handle())
+            case "put":
+                return put(self.path(), self.into_handle())
+            case "patch":
+                return patch(self.path(), self.into_handle())
+        warn(f"Unknown method: {self.method()}")
+        return get(self.path(), self.into_handle())

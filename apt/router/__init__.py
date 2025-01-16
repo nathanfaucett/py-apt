@@ -3,7 +3,7 @@ from apt.router.handler_options import HandlerOptions
 
 def method(http_method: str):
     def handler(func):
-        HandlerOptions.get(func).method = http_method
+        HandlerOptions.get(func).method = http_method.lower()
         return func
 
     return handler
