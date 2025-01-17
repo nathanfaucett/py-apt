@@ -3,11 +3,12 @@ from msgspec import Struct
 
 from apt.extract.json import JSON
 from apt.extract.query import Query
-from apt.router import method, path
+from apt.router import method, path, response
+from apt.router.handler import Handler
 from apt.router.router import Router
 
 
-class User(Struct):
+class NewUserRequest(Struct):
     name: str
 
 
@@ -18,22 +19,28 @@ class LimitAndOffsetQuery(Struct):
 
 @method("POST")
 @path("/echo")
+@response({200: ("text/plain", str), 400: ("text/plain", str)})
 async def echo(
-    user_json: JSON[User], limit_and_offset_query: Query[LimitAndOffsetQuery]
+    new_user_json: JSON[NewUserRequest],
+    limit_and_offset_query: Query[LimitAndOffsetQuery],
 ) -> Response:
-    user = user_json.get()
-    print(user)
+    new_user = new_user_json.get()
+    print(new_user)
     limit_and_offset = limit_and_offset_query.get()
     print(limit_and_offset)
-    return Response(text="Hello, " + user.name)
+    return Response(text="Hello, " + new_user.name)
 
 
 def main():
-    router = Router()
-    router.add(echo)
+    api_router = Router("/api")
+
+    util_router = Router("/util")
+    util_router.add(echo)
+
+    api_router.add(util_router)
 
     app = Application()
-    app.add_routes(router.into_routes())
+    app.add_routes(api_router.into_routes())
     run_app(app)
 
 

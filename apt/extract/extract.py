@@ -1,16 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Any, TypeGuard
-from aiohttp.web import Request, Response
+from typing import Any, Generic, TypeGuard, TypeVar
+from aiohttp.web import Request
 from result import Result
 
+E = TypeVar("E")
 
-class Extract(ABC):
+
+class Extract(ABC, Generic[E]):
 
     @staticmethod
-    def has_extract(cls: Any) -> TypeGuard["Extract"]:
+    def is_extractor(cls: Any) -> TypeGuard["Extract"]:
         return hasattr(cls, "extract") and callable(cls.extract)
 
     @staticmethod
     @abstractmethod
-    async def extract(cls, request: Request) -> Result["Extract", Response]:
-        pass
+    async def extract(cls, request: Request) -> Result["Extract", E]: ...
