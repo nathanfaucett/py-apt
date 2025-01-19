@@ -7,3 +7,4 @@ from .spec import (
     OpenAPISchemaRef,
     OpenAPIPath,
 )
+from .openapi import openapi

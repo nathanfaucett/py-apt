@@ -3,7 +3,9 @@ from aiohttp.web import run_app, Response, Application
 from msgspec import Struct
 
 from apt.extract import JSON, Query
-from apt.router import endpoint, Router, Handler
+from apt.openapi import openapi
+from apt.openapi.spec import OpenAPIInfo
+from apt.router import endpoint, Router
 
 
 class NewUserRequest(Struct):
@@ -32,6 +34,15 @@ async def echo(
     return Response(text="Hello, " + new_user.name)
 
 
+test_openapi = openapi(
+    info=OpenAPIInfo(
+        title="Test API",
+        version="1.0.0",
+        description="A test API",
+    ),
+)
+
+
 def main():
     api_router = Router("/api")
 
@@ -40,10 +51,10 @@ def main():
 
     api_router.add(util_router)
 
-    openapi_components = {}
-    openapi_paths = api_router.into_openapi(components=openapi_components)
-    pprint(openapi_components)
-    pprint(openapi_paths)
+    openapi_paths = api_router.into_openapi(
+        components=test_openapi["components"]["schemas"]
+    )
+    pprint(test_openapi)
 
     app = Application()
     app.add_routes(api_router.into_routes())

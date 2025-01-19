@@ -1,6 +1,6 @@
 from typing import Dict, NotRequired, Type
 
-from apt.openapi.spec import OpenAPISchema, OpenAPISchemaObject
+from apt.openapi.spec import OpenAPISchema, OpenAPISchemaObject, OpenAPIFormat
 
 
 def get_or_create_component(

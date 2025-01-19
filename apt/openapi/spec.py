@@ -7,6 +7,7 @@ OpenAPIStringFormat = Union[
     str,
 ]
 OpenAPINumberFormat = Literal["float", "double", "int32", "int64"]
+OpenAPIFormat = Union[OpenAPIStringFormat, OpenAPINumberFormat]
 
 
 class OpenAPISchemaBase(TypedDict):
