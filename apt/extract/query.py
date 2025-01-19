@@ -30,6 +30,10 @@ class Query(Generic[T], Extract[Response]):
             return Err(Response(status=400, text=str(err)))
 
     @staticmethod
+    def into_openapi(cls):
+        query_type = get_args(cls)[0]
+
+    @staticmethod
     def struct_from_query_string(query: MultiDictProxy[str], query_type: Type[T]) -> T:
         args = {}
         for key, value in query.items():

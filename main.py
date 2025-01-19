@@ -1,11 +1,9 @@
+from pprint import pprint
 from aiohttp.web import run_app, Response, Application
 from msgspec import Struct
 
-from apt.extract.json import JSON
-from apt.extract.query import Query
-from apt.router import method, path, response
-from apt.router.handler import Handler
-from apt.router.router import Router
+from apt.extract import JSON, Query
+from apt.router import endpoint, Router, Handler
 
 
 class NewUserRequest(Struct):
@@ -17,9 +15,12 @@ class LimitAndOffsetQuery(Struct):
     offset: int | None = None
 
 
-@method("POST")
-@path("/echo")
-@response({200: ("text/plain", str), 400: ("text/plain", str)})
+@endpoint(
+    path="/echo",
+    method="POST",
+    request_body=("application/json", NewUserRequest),
+    responses={200: ("text/plain", str), 400: ("text/plain", str)},
+)
 async def echo(
     new_user_json: JSON[NewUserRequest],
     limit_and_offset_query: Query[LimitAndOffsetQuery],
@@ -38,6 +39,11 @@ def main():
     util_router.add(echo)
 
     api_router.add(util_router)
+
+    openapi_components = {}
+    openapi_paths = api_router.into_openapi(components=openapi_components)
+    pprint(openapi_components)
+    pprint(openapi_paths)
 
     app = Application()
     app.add_routes(api_router.into_routes())

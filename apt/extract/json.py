@@ -25,3 +25,7 @@ class JSON(Generic[T], Extract[Response]):
             return Ok(JSON(value))
         except MsgspecError as err:
             return Err(Response(status=400, text=str(err)))
+
+    @staticmethod
+    def into_openapi(cls):
+        json_type = get_args(cls)[0]

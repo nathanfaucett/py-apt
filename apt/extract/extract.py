@@ -3,6 +3,7 @@ from typing import Any, Generic, TypeGuard, TypeVar
 from aiohttp.web import Request
 from result import Result
 
+
 E = TypeVar("E")
 
 
@@ -15,3 +16,7 @@ class Extract(ABC, Generic[E]):
     @staticmethod
     @abstractmethod
     async def extract(cls, request: Request) -> Result["Extract", E]: ...
+
+    @staticmethod
+    def into_openapi(cls):
+        pass
