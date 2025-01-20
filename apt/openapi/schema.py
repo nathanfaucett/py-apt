@@ -1,4 +1,5 @@
-from typing import NotRequired, Dict, Type
+from logging import warning
+from typing import List, NotRequired, Dict, Tuple, Type, TypeGuard, Union, get_args
 
 from apt.openapi.spec import OpenAPI, OpenAPISchema, OpenAPISchemaObject
 
@@ -68,11 +69,30 @@ def type_to_schema(cls: Type) -> OpenAPISchema:
             "properties": {},
             "required": [],
         }
-        for [key, value] in cls.__annotations__.items():
-            if value is NotRequired:
-                value_schema = type_to_schema(value.__type__)
+        for [key, item] in cls.__annotations__.items():
+            item_schema: OpenAPISchema
+            if item is NotRequired:
+                item_schema = type_to_schema(item.__type__)
             else:
-                value_schema = type_to_schema(value)
-                schema["required"].append(key)
-            schema["properties"][key] = value_schema
+                (item_types, is_nonable) = extract_types(item)
+                if len(item_types) == 1:
+                    item_schema = type_to_schema(item_types[0])
+                elif len(item_types) > 1:
+                    item_schema = {"oneOf": [type_to_schema(v) for v in item_types]}
+                else:
+                    item_schema = type_to_schema(item)
+                if is_nonable:
+                    schema["required"].append(key)
+            schema["properties"][key] = item_schema
         return schema
+
+
+def extract_types(cls: Type) -> Tuple[List[Type], bool]:
+    types = []
+    is_nonable = False
+    for value in get_args(cls):
+        if value is type(None):
+            is_nonable = True
+            continue
+        types.append(value)
+    return (types, is_nonable)

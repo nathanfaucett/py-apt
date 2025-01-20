@@ -1,4 +1,3 @@
-from inspect import isclass
 from logging import warning
 from typing import Any, Callable, Coroutine, Dict, Type
 from aiohttp.web import (
@@ -19,11 +18,7 @@ from apt.extract.extract import Extract
 from apt.openapi import (
     OpenAPI,
     OpenAPIRoute,
-    OpenAPIBody,
-    OpenAPIMethod,
-    get_or_create_component,
-    is_primitive_schema,
-    type_to_schema,
+    OpenAPIMethod
 )
 from apt.router.endpoint import (
     EndpointOptions,
@@ -49,11 +44,12 @@ class Handler:
     def get_method(self) -> OpenAPIMethod:
         return self.get_endpoint_options()["method"]
 
-    async def arguments(self, request: Request) -> Result[dict[str, Any], Response]:
+    async def arguments(self, request: Request, prefix: str | None = None) -> Result[dict[str, Any], Response]:
         args: dict[str, Any] = {}
+        path = self.get_path(prefix)
         for key, cls in self.handler.__annotations__.items():
             if Extract.is_extractor(cls):
-                value = await cls.extract(cls, request)
+                value = await cls.extract(cls, request, path)
                 if is_err(value):
                     return value
                 args[key] = value.ok()
@@ -65,8 +61,8 @@ class Handler:
                 print(f"Unknown type: {cls}")
         return Ok(args)
 
-    async def handle(self, request: Request) -> Response:
-        result = await self.arguments(request)
+    async def handle(self, request: Request, prefix: str | None = None) -> Response:
+        result = await self.arguments(request, prefix)
         if is_err(result):
             error = result.err()
             if isinstance(error, Response):
@@ -76,9 +72,9 @@ class Handler:
             args = result.ok() or dict(request=request)
             return await self.handler(**args)
 
-    def into_handle(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
+    def into_handle(self, prefix: str | None = None) -> Callable[[Request], Coroutine[Any, Any, Response]]:
         async def handle(request: Request) -> Response:
-            return await self.handle(request)
+            return await self.handle(request, prefix)
 
         return handle
 
@@ -86,21 +82,21 @@ class Handler:
         method = self.get_method()
         match method:
             case "get":
-                return get(self.get_path(prefix), self.into_handle())
+                return get(self.get_path(prefix), self.into_handle(prefix))
             case "post":
-                return post(self.get_path(prefix), self.into_handle())
+                return post(self.get_path(prefix), self.into_handle(prefix))
             case "delete":
-                return delete(self.get_path(prefix), self.into_handle())
+                return delete(self.get_path(prefix), self.into_handle(prefix))
             case "put":
-                return put(self.get_path(prefix), self.into_handle())
+                return put(self.get_path(prefix), self.into_handle(prefix))
             case "patch":
-                return patch(self.get_path(prefix), self.into_handle())
+                return patch(self.get_path(prefix), self.into_handle(prefix))
             case "head":
-                return head(self.get_path(prefix), self.into_handle())
+                return head(self.get_path(prefix), self.into_handle(prefix))
             case "options":
-                return options(self.get_path(prefix), self.into_handle())
+                return options(self.get_path(prefix), self.into_handle(prefix))
         warning(f"Unknown method: {method}")
-        return get(self.get_path(prefix), self.into_handle())
+        return get(self.get_path(prefix), self.into_handle(prefix))
 
     def into_openapi(
         self,
@@ -114,7 +110,7 @@ class Handler:
         method = self.get_method()
         endpoint_options = self.get_endpoint_options()
         openapi_route: OpenAPIRoute
-        if hasattr(endpoint_options, "openapi"):
+        if "openapi" not in endpoint_options:
             openapi_route = {}
             endpoint_options["openapi"] = openapi_route
         else:
@@ -132,6 +128,10 @@ class Handler:
                 openapi_route["responses"][status_code] = endpoint_body_into_openapi(
                     response, openapi, types
                 )
+
+        for name, value in self.handler.__annotations__.items():
+            if Extract.is_extractor(value):
+                value.into_openapi(value, name, openapi_route, openapi, types, path)
 
         if "paths" not in openapi:
             openapi["paths"] = {}
