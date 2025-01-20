@@ -1,13 +1,19 @@
-from typing import Dict, Generic, List, Tuple, TypeVar, get_args, Type, get_origin
-from aiohttp.web import Request, Response
-from requests import get
+from typing import (
+    Generic,
+    Iterable,
+    TypeVar,
+    Unpack,
+    get_args,
+    Type,
+    get_origin,
+)
+from aiohttp.web import Response
 from result import Err, Result, Ok
 
-from apt.extract.extract import Extract
-from apt.openapi import OpenAPI, OpenAPIRoute
+from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
 
 from apt.openapi.schema import get_or_create_component
-from apt.util import str_to_python_value
+from apt import str_to_python_value
 
 T = TypeVar("T")
 
@@ -22,25 +28,27 @@ class Path(Generic[T], Extract[Response]):
         return self.value
 
     @staticmethod
-    async def extract(cls, request: Request, path: str) -> Result["Path[T]", Response]:
+    async def extract(
+        cls, **kwargs: Unpack[ExtractKWArgs]
+    ) -> Result["Path[T]", Response]:
+        request = kwargs["request"]
+        path_pattern = kwargs["path_pattern"]
         try:
-          path_type = get_args(cls)[0]
-          value = Path.tuple_from_path(request.path, path, path_type)
-          return Ok(Path(value))
+            path_type = get_args(cls)[0]
+            value = Path.tuple_from_path(request.path, path_pattern, path_type)
+            return Ok(Path(value))
         except Exception as err:
-          return Err(Response(status=400, text=str(err)))
+            return Err(Response(status=400, text=str(err)))
 
     @staticmethod
-    def into_openapi(
-        cls,
-        name: str,
-        openapi_route: OpenAPIRoute,
-        openapi: OpenAPI,
-        types: Dict[Type, str],
-        path: str
-    ):
+    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
+        openapi_route = kwargs["openapi_route"]
+        openapi = kwargs["openapi"]
+        types = kwargs["types"]
+        path_pattern = kwargs["path_pattern"]
+
         path_type = get_args(cls)[0]
-        path_types: List[Type]
+        path_types: Iterable[Type]
         if get_origin(path_type) is tuple:
             path_types = get_args(path_type)
         else:
@@ -49,7 +57,11 @@ class Path(Generic[T], Extract[Response]):
         if "parameters" not in openapi_route:
             openapi_route["parameters"] = []
 
-        names = [name[1:-1] for name in path.split("/") if name.startswith("{") and name.endswith("}")]
+        names = [
+            name[1:-1]
+            for name in path_pattern.split("/")
+            if name.startswith("{") and name.endswith("}")
+        ]
         for i, path_type in enumerate(path_types):
             openapi_route["parameters"].append(
                 {
@@ -67,7 +79,7 @@ class Path(Generic[T], Extract[Response]):
         if len(path_parts) != len(pattern_parts):
             raise ValueError("Path parts and pattern parts do not match")
 
-        path_types: List[Type]
+        path_types: Iterable[Type]
         if get_origin(path_type) is tuple:
             path_types = get_args(path_type)
         else:

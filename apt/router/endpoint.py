@@ -19,7 +19,7 @@ from apt.openapi import (
     OpenAPI,
     get_or_create_component,
 )
-from apt.util import to_camel_case
+from apt import to_camel_case
 
 __endpoint_options_attr_key__ = "__endpoint_options__"
 

@@ -1,10 +1,10 @@
-from typing import Dict, Generic, Type, TypeVar, get_args
+from typing import Generic, TypeVar, Unpack, get_args
 from msgspec import Struct, json, MsgspecError
-from aiohttp.web import Request, Response
+from aiohttp.web import Response
 from result import Err, Result, Ok
 
-from apt.extract.extract import Extract
-from apt.openapi import OpenAPI, OpenAPIRoute, get_or_create_component
+from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
+from apt.openapi import get_or_create_component
 
 T = TypeVar("T", bound=Struct)
 
@@ -19,7 +19,10 @@ class JSON(Generic[T], Extract[Response]):
         return self.value
 
     @staticmethod
-    async def extract(cls, request: Request, path: str) -> Result["JSON[T]", Response]:
+    async def extract(
+        cls, **kwargs: Unpack[ExtractKWArgs]
+    ) -> Result["JSON[T]", Response]:
+        request = kwargs["request"]
         try:
             json_type = get_args(cls)[0]
             value = json.decode(await request.read(), type=json_type)
@@ -28,14 +31,11 @@ class JSON(Generic[T], Extract[Response]):
             return Err(Response(status=400, text=str(err)))
 
     @staticmethod
-    def into_openapi(
-        cls,
-        _name: str,
-        openapi_route: OpenAPIRoute,
-        openapi: OpenAPI,
-        types: Dict[Type, str],
-        path: str
-    ):
+    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
+        openapi_route = kwargs["openapi_route"]
+        openapi = kwargs["openapi"]
+        types = kwargs["types"]
+
         json_type = get_args(cls)[0]
         schema = get_or_create_component(json_type, openapi, types)
         if "requestBody" not in openapi_route:

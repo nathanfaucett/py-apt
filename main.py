@@ -1,5 +1,4 @@
 from pprint import pprint
-from typing import Tuple
 from aiohttp.web import run_app, Response, Application
 from msgspec import Struct
 
@@ -7,6 +6,9 @@ from apt.extract import JSON, Query, Path
 from apt.openapi import openapi
 from apt.openapi.spec import OpenAPIInfo
 from apt.router import endpoint, Router
+from apt.sql import sql
+
+from db import query_one
 
 
 test_openapi = openapi(
@@ -44,7 +46,7 @@ class LimitAndOffsetQuery(Struct):
 async def test_endpoint(
     new_user_json: JSON[NewUserRequest],
     limit_and_offset_query: Query[LimitAndOffsetQuery],
-    path: Path[Tuple[str, int]],
+    path: Path[tuple[str, int]],
 ) -> Response:
     new_user = new_user_json.get()
     print(new_user)
@@ -56,6 +58,9 @@ async def test_endpoint(
 
 
 def main():
+    users = query_one(sql("select * from users;"))
+    print(users)
+
     api_router = Router("/api")
 
     util_router = Router("/util")

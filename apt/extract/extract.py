@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Type, TypeGuard, TypeVar, Dict
+from typing import Any, Generic, Type, TypeGuard, TypeVar, Dict, TypedDict, Unpack
 from aiohttp.web import Request
 from result import Result
 
@@ -10,6 +10,19 @@ from apt.openapi.spec import OpenAPIRoute
 E = TypeVar("E")
 
 
+class ExtractKWArgs(TypedDict):
+    request: Request
+    path_pattern: str
+
+
+class ExtractIntoOpenAPIKWArgs(TypedDict):
+    name: str
+    openapi_route: OpenAPIRoute
+    openapi: OpenAPI
+    types: Dict[Type, str]
+    path_pattern: str
+
+
 class Extract(ABC, Generic[E]):
 
     @staticmethod
@@ -18,16 +31,9 @@ class Extract(ABC, Generic[E]):
 
     @staticmethod
     @abstractmethod
-    async def extract(cls, request: Request, path: str) -> Result["Extract", E]: ...
+    async def extract(cls, **kwargs: Unpack[ExtractKWArgs]) -> Result["Extract", E]: ...
 
     @staticmethod
     @abstractmethod
-    def into_openapi(
-        cls,
-        name: str,
-        openapi_route: OpenAPIRoute,
-        openapi: OpenAPI,
-        types: Dict[Type, str],
-        path: str
-    ):
+    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
         pass

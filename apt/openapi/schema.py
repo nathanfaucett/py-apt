@@ -1,5 +1,15 @@
 from logging import warning
-from typing import List, NotRequired, Dict, Tuple, Type, TypeGuard, Union, get_args
+from typing import (
+    List,
+    NotRequired,
+    Dict,
+    Tuple,
+    Type,
+    TypeGuard,
+    Union,
+    get_args,
+    get_type_hints,
+)
 
 from apt.openapi.spec import OpenAPI, OpenAPISchema, OpenAPISchemaObject
 
@@ -69,7 +79,7 @@ def type_to_schema(cls: Type) -> OpenAPISchema:
             "properties": {},
             "required": [],
         }
-        for [key, item] in cls.__annotations__.items():
+        for [key, item] in get_type_hints(cls).items():
             item_schema: OpenAPISchema
             if item is NotRequired:
                 item_schema = type_to_schema(item.__type__)

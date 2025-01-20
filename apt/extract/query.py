@@ -1,13 +1,13 @@
 from json import dumps
-from typing import Dict, Generic, TypeVar, get_args, Type
+from typing import Generic, TypeVar, Unpack, get_args, Type
 from msgspec import Struct, MsgspecError, json
-from aiohttp.web import Request, Response
+from aiohttp.web import Response
 from multidict import MultiDictProxy
 from result import Err, Result, Ok
 
-from apt.extract.extract import Extract
-from apt.openapi import OpenAPI, OpenAPIRoute, get_or_create_component
-from apt.util import str_to_python_value
+from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
+from apt.openapi import get_or_create_component
+from apt import str_to_python_value
 
 T = TypeVar("T", bound=Struct)
 
@@ -22,7 +22,10 @@ class Query(Generic[T], Extract[Response]):
         return self.value
 
     @staticmethod
-    async def extract(cls, request: Request, path: str) -> Result["Query[T]", Response]:
+    async def extract(
+        cls, **kwargs: Unpack[ExtractKWArgs]
+    ) -> Result["Query[T]", Response]:
+        request = kwargs["request"]
         try:
             query_type = get_args(cls)[0]
             value = Query.struct_from_query_string(request.url.query, query_type)
@@ -31,14 +34,12 @@ class Query(Generic[T], Extract[Response]):
             return Err(Response(status=400, text=str(err)))
 
     @staticmethod
-    def into_openapi(
-        cls,
-        name: str,
-        openapi_route: OpenAPIRoute,
-        openapi: OpenAPI,
-        types: Dict[Type, str],
-        path: str
-    ):
+    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
+        openapi_route = kwargs["openapi_route"]
+        openapi = kwargs["openapi"]
+        types = kwargs["types"]
+        name = kwargs["name"]
+
         query_type = get_args(cls)[0]
         schema = get_or_create_component(query_type, openapi, types)
         if "parameters" not in openapi_route:
