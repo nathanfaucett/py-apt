@@ -8,6 +8,15 @@ from apt.openapi.spec import OpenAPIInfo
 from apt.router import endpoint, Router
 
 
+test_openapi = openapi(
+    info=OpenAPIInfo(
+        title="Test API",
+        version="1.0.0",
+        description="A test API",
+    ),
+)
+
+
 class NewUserRequest(Struct):
     name: str
 
@@ -21,7 +30,15 @@ class LimitAndOffsetQuery(Struct):
     path="/echo",
     method="POST",
     request_body=("application/json", NewUserRequest),
-    responses={200: ("text/plain", str), 400: ("text/plain", str)},
+    responses={
+        200: ("text/plain", str),
+        400: {
+            "content_type": "text/plain",
+            "items": str,
+            "format": "error",
+            "min_items": 1,
+        },
+    },
 )
 async def echo(
     new_user_json: JSON[NewUserRequest],
@@ -34,15 +51,6 @@ async def echo(
     return Response(text="Hello, " + new_user.name)
 
 
-test_openapi = openapi(
-    info=OpenAPIInfo(
-        title="Test API",
-        version="1.0.0",
-        description="A test API",
-    ),
-)
-
-
 def main():
     api_router = Router("/api")
 
@@ -51,9 +59,7 @@ def main():
 
     api_router.add(util_router)
 
-    openapi_paths = api_router.into_openapi(
-        components=test_openapi["components"]["schemas"]
-    )
+    api_router.into_openapi(openapi=test_openapi)
     pprint(test_openapi)
 
     app = Application()

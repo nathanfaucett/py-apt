@@ -8,6 +8,9 @@ OpenAPIStringFormat = Union[
 ]
 OpenAPINumberFormat = Literal["float", "double", "int32", "int64"]
 OpenAPIFormat = Union[OpenAPIStringFormat, OpenAPINumberFormat]
+OpenAPIMethod = Literal[
+    "get", "head", "options", "post", "put", "patch", "delete", "trace"
+]
 
 
 class OpenAPISchemaBase(TypedDict):
@@ -109,7 +112,7 @@ class OpenAPISchemaInteger(OpenAPISchemaBase):
 
 class OpenAPISchemaArray(OpenAPISchemaBase):
     type: Literal["array"]
-    items: NotRequired[List["OpenAPISchema"]]
+    items: NotRequired["OpenAPISchema"]
     minItems: NotRequired[int]
     maxItems: NotRequired[int]
     uniqueItems: NotRequired[bool]

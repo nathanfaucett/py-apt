@@ -41,3 +41,8 @@ def try_float(element: Any) -> float | None:
         return float(element)
     except ValueError:
         return None
+
+
+def to_camel_case(text: str) -> str:
+    words = text.split("_")
+    return words[0] + "".join(word.capitalize() for word in words[1:])

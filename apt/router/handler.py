@@ -1,6 +1,6 @@
 from inspect import isclass
 from logging import warning
-from typing import Any, Callable, Coroutine, Dict, Tuple
+from typing import Any, Callable, Coroutine, Dict, Type
 from aiohttp.web import (
     get,
     head,
@@ -16,14 +16,20 @@ from aiohttp.web import (
 from result import Ok, Result, is_err
 
 from apt.extract.extract import Extract
-from apt.openapi import OpenAPIRoute, OpenAPISchema, OpenAPISchemaRef
-from apt.openapi.schema import (
+from apt.openapi import (
+    OpenAPI,
+    OpenAPIRoute,
+    OpenAPIBody,
+    OpenAPIMethod,
     get_or_create_component,
     is_primitive_schema,
     type_to_schema,
 )
-from apt.openapi.spec import OpenAPIBody, OpenAPIPath
-from apt.router.endpoint import EndpointOptions, get_endpoint_options
+from apt.router.endpoint import (
+    EndpointOptions,
+    endpoint_body_into_openapi,
+    get_endpoint_options,
+)
 
 
 class Handler:
@@ -40,7 +46,7 @@ class Handler:
             return f"{prefix}{self.get_endpoint_options()['path']}"
         return self.get_endpoint_options()["path"]
 
-    def get_method(self) -> str:
+    def get_method(self) -> OpenAPIMethod:
         return self.get_endpoint_options()["method"]
 
     async def arguments(self, request: Request) -> Result[dict[str, Any], Response]:
@@ -98,9 +104,12 @@ class Handler:
 
     def into_openapi(
         self,
-        components: Dict[str, OpenAPISchema],
+        openapi: OpenAPI,
+        types: Dict[Type, str] | None = None,
         prefix: str | None = None,
-    ) -> OpenAPIPath:
+    ) -> OpenAPI:
+        if types is None:
+            types = {}
         path = self.get_path(prefix)
         method = self.get_method()
         endpoint_options = self.get_endpoint_options()
@@ -112,53 +121,27 @@ class Handler:
             openapi_route = endpoint_options["openapi"]
         request_body = endpoint_options.get("request_body")
         if request_body is not None:
-            openapi_request_body: OpenAPIBody
-            if isclass(request_body):
-                openapi_request_body = {
-                    "content": {
-                        "application/json": {
-                            "schema": get_or_create_component(request_body, components)
-                        }
-                    }
-                }
-            elif isinstance(request_body, tuple):
-                content_type = request_body[0]
-                openapi_request_body = {
-                    "content": {
-                        content_type: {
-                            "schema": get_or_create_component(
-                                request_body[1], components
-                            )
-                        }
-                    }
-                }
-            else:
-                openapi_request_body = request_body
-            openapi_route["requestBody"] = openapi_request_body
+            openapi_route["requestBody"] = endpoint_body_into_openapi(
+                request_body, openapi, types
+            )
         responses = endpoint_options.get("responses")
         if responses is not None:
-            openapi_responses: Dict[int, OpenAPIBody] = {}
+            if "responses" not in openapi_route:
+                openapi_route["responses"] = {}
             for status_code, response in responses.items():
-                if isclass(response):
-                    openapi_responses[status_code] = {
-                        "content": {
-                            "application/json": {
-                                "schema": get_or_create_component(response, components)
-                            }
-                        }
-                    }
-                elif isinstance(response, tuple):
-                    content_type = response[0]
-                    openapi_responses[status_code] = {
-                        "content": {
-                            content_type: {
-                                "schema": get_or_create_component(
-                                    response[1], components
-                                )
-                            }
-                        }
-                    }
-                else:
-                    openapi_responses[status_code] = response
-            openapi_route["responses"] = openapi_responses
-        return {path: {method: openapi_route}}
+                openapi_route["responses"][status_code] = endpoint_body_into_openapi(
+                    response, openapi, types
+                )
+
+        if "paths" not in openapi:
+            openapi["paths"] = {}
+
+        if path not in openapi["paths"]:
+            openapi["paths"][path] = {}
+
+        if method not in openapi["paths"][path]:
+            openapi["paths"][path][method] = openapi_route
+        else:
+            openapi["paths"][path][method].update(openapi_route)
+
+        return openapi

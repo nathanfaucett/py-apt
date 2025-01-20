@@ -11,6 +11,7 @@ from apt.openapi.spec import (
 
 
 def openapi(
+    openapi: str | None = None,
     info: OpenAPIInfo | None = None,
     servers: List[Dict[str, OpenAPIServer]] | None = None,
     security: List[Dict[str, List[str]]] | None = None,
@@ -19,7 +20,11 @@ def openapi(
     components: OpenAPIComponents | None = None,
     external_docs: OpenAPIExternalDocs | None = None,
 ) -> OpenAPI:
-    spec: OpenAPI = {"openapi": "3.0.3"}
+    spec = OpenAPI()
+    if openapi is not None:
+        spec["openapi"] = openapi
+    else:
+        spec["openapi"] = "3.1.1"
     if info is not None:
         spec["info"] = info
     if servers is not None:

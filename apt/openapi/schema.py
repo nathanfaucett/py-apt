@@ -1,18 +1,32 @@
-from typing import Dict, NotRequired, Type
+from typing import NotRequired, Dict, Type
 
-from apt.openapi.spec import OpenAPISchema, OpenAPISchemaObject, OpenAPIFormat
+from apt.openapi.spec import OpenAPI, OpenAPISchema, OpenAPISchemaObject
 
 
 def get_or_create_component(
-    type: Type, components: Dict[str, OpenAPISchema]
+    cls: Type, openapi: OpenAPI, types: Dict[Type, str]
 ) -> OpenAPISchema:
-    if is_primitive_schema(type):
-        return type_to_schema(type)
-    name = type.__name__
-    if name in components:
-        return components[name]
-    schema = type_to_schema(type)
-    components[name] = schema
+    if is_primitive_schema(cls):
+        return type_to_schema(cls)
+
+    name = types.get(cls)
+    if name is None:
+        if "components" not in openapi:
+            openapi["components"] = {}
+        if "schemas" not in openapi["components"]:
+            openapi["components"]["schemas"] = {}
+
+        name = cls.__name__
+        count = 0
+        while name in openapi["components"]["schemas"]:
+            name = f"{cls.__name__}{count}"
+            count += 1
+
+        types[cls] = name
+
+        schema = type_to_schema(cls)
+        openapi["components"]["schemas"][name] = schema
+
     return {"$ref": f"#components/schemas/{name}"}
 
 
