@@ -1,5 +1,6 @@
-from pprint import pprint
+import json
 from aiohttp.web import run_app, Response, Application
+import aiohttp_cors
 from msgspec import Struct
 
 from apt.extract import JSON, Query, Path
@@ -61,8 +62,19 @@ async def test_endpoint(
     return Response(text="Hello, " + new_user.name)
 
 
+@endpoint(
+    path="/openapi.json",
+    method="GET",
+)
+async def openapi_json() -> Response:
+    return Response(
+        text=json.dumps(test_openapi, indent=2), content_type="application/json"
+    )
+
+
 def main():
     api_router = Router("/api")
+    api_router.add(openapi_json)
 
     util_router = Router("/util")
     util_router.add(test_endpoint)
@@ -70,10 +82,19 @@ def main():
     api_router.add(util_router)
 
     api_router.into_openapi(openapi=test_openapi)
-    pprint(test_openapi)
 
     app = Application()
     app.add_routes(api_router.into_routes())
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True, expose_headers="*", allow_headers="*"
+            )
+        },
+    )
+    for route in list(app.router.routes()):
+        cors.add(route)
     run_app(app)
 
 

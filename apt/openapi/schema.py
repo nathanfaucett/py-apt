@@ -32,7 +32,7 @@ def get_or_create_component(
         schema = type_to_schema(cls)
         openapi["components"]["schemas"][name] = schema
 
-    return {"$ref": f"#components/schemas/{name}"}
+    return {"$ref": f"#/components/schemas/{name}"}
 
 
 def is_primitive_schema(
@@ -85,7 +85,7 @@ def type_to_schema(cls: Type) -> OpenAPISchema:
                     item_schema = {"oneOf": [type_to_schema(v) for v in item_types]}
                 else:
                     item_schema = type_to_schema(item)
-                if is_nonable:
+                if not is_nonable:
                     schema["required"].append(key)
             schema["properties"][key] = item_schema
         return schema

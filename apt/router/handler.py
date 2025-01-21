@@ -69,7 +69,7 @@ class Handler:
                 return error
             return Response(status=500, text=str(error))
         else:
-            args = result.ok() or dict(request=request)
+            args = result.ok()
             return await self.handler(**args)
 
     def into_handle(
