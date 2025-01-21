@@ -1,5 +1,5 @@
 from logging import warning
-from typing import Any, Callable, Coroutine, Dict, Type, get_type_hints
+from typing import Any, Callable, Coroutine, Type, get_type_hints
 from aiohttp.web import (
     get,
     head,
@@ -103,7 +103,7 @@ class Handler:
     def into_openapi(
         self,
         openapi: OpenAPI,
-        types: Dict[Type, str] | None = None,
+        types: dict[Type, str] | None = None,
         prefix: str | None = None,
     ) -> OpenAPI:
         if types is None:

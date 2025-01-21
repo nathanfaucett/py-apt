@@ -1,7 +1,6 @@
-from typing import Any, Callable, Coroutine, Dict, Iterable, List, Set, Type, Union
+from typing import Any, Callable, Coroutine, Iterable, Type, Union
 from aiohttp.web import Response, AbstractRouteDef
 
-from apt.openapi import OpenAPIPath, OpenAPISchema
 from apt.openapi.spec import OpenAPI
 from apt.router.handler import Handler
 
@@ -35,7 +34,7 @@ class Router:
         return self
 
     def into_routes(self, prefix: str | None = None) -> Iterable[AbstractRouteDef]:
-        routes: List[AbstractRouteDef] = []
+        routes: list[AbstractRouteDef] = []
         prefix = self.get_prefix(prefix)
         for child in self.children:
             if isinstance(child, Router):
@@ -47,7 +46,7 @@ class Router:
     def into_openapi(
         self,
         openapi: OpenAPI,
-        types: Dict[Type, str] | None = None,
+        types: dict[Type, str] | None = None,
         prefix: str | None = None,
     ) -> OpenAPI:
         prefix = self.get_prefix(prefix)

@@ -1,12 +1,6 @@
-from logging import warning
 from typing import (
-    List,
     NotRequired,
-    Dict,
-    Tuple,
     Type,
-    TypeGuard,
-    Union,
     get_args,
     get_type_hints,
 )
@@ -15,7 +9,7 @@ from apt.openapi.spec import OpenAPI, OpenAPISchema, OpenAPISchemaObject
 
 
 def get_or_create_component(
-    cls: Type, openapi: OpenAPI, types: Dict[Type, str]
+    cls: Type, openapi: OpenAPI, types: dict[Type, str]
 ) -> OpenAPISchema:
     if is_primitive_schema(cls):
         return type_to_schema(cls)
@@ -97,7 +91,7 @@ def type_to_schema(cls: Type) -> OpenAPISchema:
         return schema
 
 
-def extract_types(cls: Type) -> Tuple[List[Type], bool]:
+def extract_types(cls: Type) -> tuple[list[Type], bool]:
     types = []
     is_nonable = False
     for value in get_args(cls):

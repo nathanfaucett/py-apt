@@ -1,14 +1,11 @@
 from inspect import isclass
 from typing import (
     Any,
-    Dict,
     NotRequired,
     TypeGuard,
     TypedDict,
     Type,
     Union,
-    Tuple,
-    List,
 )
 
 from apt.openapi import (
@@ -34,7 +31,7 @@ class EndpointBodyDict(TypedDict):
     write_only: NotRequired[bool]
     # strings
     format: NotRequired[str]
-    enum: NotRequired[List[str]]
+    enum: NotRequired[list[str]]
     default: NotRequired[Any]
     pattern: NotRequired[str]
     min_length: NotRequired[int]
@@ -51,9 +48,9 @@ class EndpointBodyDict(TypedDict):
     min_items: NotRequired[int]
     max_items: NotRequired[int]
     # objects
-    properties: NotRequired[Dict[str, Type]]
+    properties: NotRequired[dict[str, Type]]
     additional_properties: NotRequired[Union[Type, bool]]
-    required: NotRequired[List[str]]
+    required: NotRequired[list[str]]
 
 
 def is_array_endpoint_key(key: str) -> bool:
@@ -70,12 +67,12 @@ def is_endpoint_body_dict(obj) -> TypeGuard[EndpointBodyDict]:
     )
 
 
-EndpointBody = Union[Type, Tuple[str, Type], EndpointBodyDict, OpenAPIBody]
-EndpointResponses = Dict[int, EndpointBody]
+EndpointBody = Union[Type, tuple[str, Type], EndpointBodyDict, OpenAPIBody]
+EndpointResponses = dict[int, EndpointBody]
 
 
 def endpoint_body_into_openapi(
-    endpoint_body: EndpointBody, openapi: OpenAPI, types: Dict[Type, str]
+    endpoint_body: EndpointBody, openapi: OpenAPI, types: dict[Type, str]
 ) -> OpenAPIBody:
     if isclass(endpoint_body):
         return {

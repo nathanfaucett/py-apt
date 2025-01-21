@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Type, TypeGuard, TypeVar, Dict, TypedDict, Unpack
+from typing import Any, Generic, Type, TypeGuard, TypeVar, TypedDict, Unpack
 from aiohttp.web import Request
 from result import Result
 
@@ -19,7 +19,7 @@ class ExtractIntoOpenAPIKWArgs(TypedDict):
     name: str
     openapi_route: OpenAPIRoute
     openapi: OpenAPI
-    types: Dict[Type, str]
+    types: dict[Type, str]
     path_pattern: str
 
 

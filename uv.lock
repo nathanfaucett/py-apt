@@ -1,6 +1,12 @@
 version = 1
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "py-apt",
+    "py-sqlx",
+]
+
 [[package]]
 name = "aiohappyeyeballs"
 version = "2.4.4"
@@ -244,6 +250,11 @@ requires-dist = [
     { name = "msgspec", specifier = ">=0.19.0" },
     { name = "result", specifier = ">=0.17.0" },
 ]
+
+[[package]]
+name = "py-sqlx"
+version = "0.1.0"
+source = { virtual = "sqlx" }
 
 [[package]]
 name = "result"

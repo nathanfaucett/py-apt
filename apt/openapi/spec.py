@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, NotRequired, TypedDict, Union
+from typing import Any, Literal, NotRequired, TypedDict, Union
 
 
 OpenAPIIn = Literal["path", "query", "header"]
@@ -42,20 +42,20 @@ class OpenAPISchemaAnyValue(OpenAPISchemaBase):
 
 class OpenAPISchemaDiscriminator(TypedDict):
     propertyName: str
-    mapping: NotRequired[Dict[str, str]]
+    mapping: NotRequired[dict[str, str]]
 
 
 class OpenAPISchemaOneOf(OpenAPISchemaBase):
-    oneOf: List["OpenAPISchema"]
+    oneOf: list["OpenAPISchema"]
     discriminator: NotRequired[OpenAPISchemaDiscriminator]
 
 
 class OpenAPISchemaAllOf(OpenAPISchemaBase):
-    allOf: List["OpenAPISchema"]
+    allOf: list["OpenAPISchema"]
 
 
 class OpenAPISchemaAnyOf(OpenAPISchemaBase):
-    anyOf: List["OpenAPISchema"]
+    anyOf: list["OpenAPISchema"]
 
 
 OpenAPISchemaNot = TypedDict(
@@ -67,7 +67,7 @@ OpenAPISchemaNot = TypedDict(
         "readOnly": NotRequired[bool],
         "writeOnly": NotRequired[bool],
         "deprecated": NotRequired[bool],
-        "not": List["OpenAPISchema"],
+        "not": list["OpenAPISchema"],
     },
 )
 
@@ -79,7 +79,7 @@ class OpenAPISchemaBoolean(OpenAPISchemaBase):
 class OpenAPISchemaString(OpenAPISchemaBase):
     type: Literal["string"]
     format: NotRequired[OpenAPIStringFormat]
-    enum: NotRequired[List[str]]
+    enum: NotRequired[list[str]]
     default: NotRequired[str]
     pattern: NotRequired[str]
     minLength: NotRequired[int]
@@ -89,7 +89,7 @@ class OpenAPISchemaString(OpenAPISchemaBase):
 class OpenAPISchemaNumber(OpenAPISchemaBase):
     type: Literal["number"]
     format: NotRequired[OpenAPINumberFormat]
-    enum: NotRequired[List[str]]
+    enum: NotRequired[list[str]]
     default: NotRequired[str]
     minimum: NotRequired[Union[int, float]]
     exclusiveMinimum: NotRequired[bool]
@@ -101,7 +101,7 @@ class OpenAPISchemaNumber(OpenAPISchemaBase):
 class OpenAPISchemaInteger(OpenAPISchemaBase):
     type: Literal["integer"]
     format: NotRequired[OpenAPINumberFormat]
-    enum: NotRequired[List[str]]
+    enum: NotRequired[list[str]]
     default: NotRequired[str]
     minimum: NotRequired[Union[int, float]]
     exclusiveMinimum: NotRequired[bool]
@@ -120,9 +120,9 @@ class OpenAPISchemaArray(OpenAPISchemaBase):
 
 class OpenAPISchemaObject(OpenAPISchemaBase):
     type: Literal["object"]
-    properties: NotRequired[Dict[str, "OpenAPISchema"]]
+    properties: NotRequired[dict[str, "OpenAPISchema"]]
     additionalProperties: NotRequired[Union["OpenAPISchema", bool]]
-    required: NotRequired[List[str]]
+    required: NotRequired[list[str]]
     minProperties: NotRequired[int]
     maxProperties: NotRequired[int]
 
@@ -162,7 +162,7 @@ class OpenAPIBodyContent(TypedDict):
 class OpenAPIBody(TypedDict):
     description: NotRequired[str]
     required: NotRequired[Literal[True]]
-    content: Dict[str, OpenAPIBodyContent]
+    content: dict[str, OpenAPIBodyContent]
 
 
 class OpenAPIExternalDocs(TypedDict):
@@ -171,20 +171,20 @@ class OpenAPIExternalDocs(TypedDict):
 
 
 class OpenAPIRoute(TypedDict):
-    tags: NotRequired[List[str]]
+    tags: NotRequired[list[str]]
     summary: NotRequired[str]
     description: NotRequired[str]
     operationId: NotRequired[str]
-    security: NotRequired[List[Dict[str, List[str]]]]
-    parameters: NotRequired[List[OpenAPIParameter]]
+    security: NotRequired[list[dict[str, list[str]]]]
+    parameters: NotRequired[list[OpenAPIParameter]]
     requestBody: NotRequired[OpenAPIBody]
-    responses: NotRequired[Dict[int, OpenAPIBody]]
+    responses: NotRequired[dict[int, OpenAPIBody]]
     externalDocs: NotRequired[OpenAPIExternalDocs]
 
 
 class OpenAPIPath(TypedDict):
     description: NotRequired[str]
-    servers: NotRequired[List[Dict[str, "OpenAPIServer"]]]
+    servers: NotRequired[list[dict[str, "OpenAPIServer"]]]
     get: NotRequired[OpenAPIRoute]
     head: NotRequired[OpenAPIRoute]
     post: NotRequired[OpenAPIRoute]
@@ -219,7 +219,7 @@ class OpenAPISecuritySchemaAPIKey(OpenAPISecuritySchemaBase):
 
 class OpenAPISecuritySchemaOAuth2(OpenAPISecuritySchemaBase):
     type: Literal["oauth2"]
-    flows: NotRequired[Dict[str, Dict[str, Any]]]
+    flows: NotRequired[dict[str, dict[str, Any]]]
 
 
 class OpenAPISecuritySchemaOpenIdConnect(OpenAPISecuritySchemaBase):
@@ -236,8 +236,8 @@ OpenAPISecuritySchema = Union[
 
 
 class OpenAPIComponents(TypedDict):
-    schemas: NotRequired[Dict[str, OpenAPISchema]]
-    securitySchemes: NotRequired[Dict[str, OpenAPISecuritySchema]]
+    schemas: NotRequired[dict[str, OpenAPISchema]]
+    securitySchemes: NotRequired[dict[str, OpenAPISecuritySchema]]
 
 
 class OpenAPIInfoContact(TypedDict):
@@ -256,14 +256,14 @@ class OpenAPIInfo(TypedDict):
     version: NotRequired[str]
     description: NotRequired[str]
     termsOfService: NotRequired[str]
-    contact: NotRequired[Dict[str, Union[str, OpenAPIInfoContact]]]
-    license: NotRequired[Union[str, OpenAPIInfoLicense, Dict[str, OpenAPIInfoLicense]]]
+    contact: NotRequired[dict[str, Union[str, OpenAPIInfoContact]]]
+    license: NotRequired[Union[str, OpenAPIInfoLicense, dict[str, OpenAPIInfoLicense]]]
 
 
 class OpenAPIServer(TypedDict):
     url: str
     description: NotRequired[str]
-    variables: NotRequired[Dict[str, Dict[str, OpenAPISchema]]]
+    variables: NotRequired[dict[str, dict[str, OpenAPISchema]]]
 
 
 class OpenAPITag(TypedDict):
@@ -275,9 +275,9 @@ class OpenAPITag(TypedDict):
 class OpenAPI(TypedDict):
     openapi: NotRequired[str]
     info: NotRequired[OpenAPIInfo]
-    servers: NotRequired[List[Dict[str, OpenAPIServer]]]
-    security: NotRequired[List[Dict[str, List[str]]]]
-    tags: NotRequired[List[OpenAPITag]]
-    paths: NotRequired[Dict[str, OpenAPIPath]]
+    servers: NotRequired[list[dict[str, OpenAPIServer]]]
+    security: NotRequired[list[dict[str, list[str]]]]
+    tags: NotRequired[list[OpenAPITag]]
+    paths: NotRequired[dict[str, OpenAPIPath]]
     components: NotRequired[OpenAPIComponents]
     externalDocs: NotRequired[OpenAPIExternalDocs]

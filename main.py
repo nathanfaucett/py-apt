@@ -6,7 +6,7 @@ from apt.extract import JSON, Query, Path
 from apt.openapi import openapi
 from apt.openapi.spec import OpenAPIInfo
 from apt.router import endpoint, Router
-from apt.sql import sql
+from sqlx import sqlx
 
 from db import query_one
 
@@ -50,17 +50,20 @@ async def test_endpoint(
 ) -> Response:
     new_user = new_user_json.get()
     print(new_user)
+
     limit_and_offset = limit_and_offset_query.get()
     print(limit_and_offset)
+
     (action, id) = path.get()
     print(action, id)
+
+    user = query_one(sqlx("select * from users where id = $1;"), id)
+    print(user)
+
     return Response(text="Hello, " + new_user.name)
 
 
 def main():
-    users = query_one(sql("select * from users;"))
-    print(users)
-
     api_router = Router("/api")
 
     util_router = Router("/util")

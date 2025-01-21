@@ -1,4 +1,3 @@
-from typing import Dict, List
 from apt.openapi.spec import (
     OpenAPI,
     OpenAPIComponents,
@@ -13,10 +12,10 @@ from apt.openapi.spec import (
 def openapi(
     openapi: str | None = None,
     info: OpenAPIInfo | None = None,
-    servers: List[Dict[str, OpenAPIServer]] | None = None,
-    security: List[Dict[str, List[str]]] | None = None,
-    tags: List[OpenAPITag] | None = None,
-    paths: Dict[str, OpenAPIPath] | None = None,
+    servers: list[dict[str, OpenAPIServer]] | None = None,
+    security: list[dict[str, list[str]]] | None = None,
+    tags: list[OpenAPITag] | None = None,
+    paths: dict[str, OpenAPIPath] | None = None,
     components: OpenAPIComponents | None = None,
     external_docs: OpenAPIExternalDocs | None = None,
 ) -> OpenAPI:
