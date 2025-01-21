@@ -3,8 +3,7 @@ from aiohttp.web import run_app, Response, Application
 from msgspec import Struct
 
 from apt.extract import JSON, Query, Path
-from apt.openapi import openapi
-from apt.openapi.spec import OpenAPIInfo
+from apt.openapi import openapi, OpenAPIInfo
 from apt.router import endpoint, Router
 from sqlx import sqlx
 
@@ -32,7 +31,6 @@ class LimitAndOffsetQuery(Struct):
 @endpoint(
     path="/{action}/{id}",
     method="POST",
-    request_body=("application/json", NewUserRequest),
     responses={
         200: ("text/plain", str),
         400: {
@@ -54,10 +52,10 @@ async def test_endpoint(
     limit_and_offset = limit_and_offset_query.get()
     print(limit_and_offset)
 
-    (action, id) = path.get()
-    print(action, id)
+    (action, path_id) = path.get()
+    print(action, path_id)
 
-    user = query_one(sqlx("select * from users where id = $1;"), id)
+    user = query_one(sqlx("select * from users where id = $1;"), path_id)
     print(user)
 
     return Response(text="Hello, " + new_user.name)
