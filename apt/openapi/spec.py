@@ -1,14 +1,15 @@
+from enum import Enum
 from typing import Any, Literal, NotRequired, TypedDict, Union
 
 
-OpenAPIIn = Literal["path", "query", "header"]
-OpenAPIStringFormat = Union[
+type OpenAPIIn = Literal["path", "query", "header"]
+type OpenAPIStringFormat = Union[
     Literal["data", "date-time", "password", "byte", "binary"],
     str,
 ]
-OpenAPINumberFormat = Literal["float", "double", "int32", "int64"]
-OpenAPIFormat = Union[OpenAPIStringFormat, OpenAPINumberFormat]
-OpenAPIMethod = Literal[
+type OpenAPINumberFormat = Literal["float", "double", "int32", "int64"]
+type OpenAPIFormat = Union[OpenAPIStringFormat, OpenAPINumberFormat]
+type OpenAPIMethod = Literal[
     "get", "head", "options", "post", "put", "patch", "delete", "trace"
 ]
 
@@ -127,7 +128,7 @@ class OpenAPISchemaObject(OpenAPISchemaBase):
     maxProperties: NotRequired[int]
 
 
-OpenAPISchema = Union[
+type OpenAPISchema = Union[
     OpenAPISchemaRef,
     OpenAPISchemaString,
     OpenAPISchemaInteger,

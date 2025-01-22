@@ -3,6 +3,7 @@ from typing import (
     Literal,
     NotRequired,
     Type,
+    TypeAliasType,
     Union,
     get_args,
     get_origin,
@@ -38,16 +39,16 @@ def get_or_create_schema(
     elif cls is NoneType:
         return {"nullable": True}
     elif get_origin(cls) is list:
-        array_schema: OpenAPISchemaArray = {"type": "array"}
+        array_schema = OpenAPISchemaArray(type="array")
         list_type = get_args(cls)[0]
         if list_type is not Any:
             array_schema["items"] = get_or_create_schema(list_type, openapi, types)
         return array_schema
     elif get_origin(cls) is dict:
-        object_schema: OpenAPISchemaObject = {
-            "type": "object",
-            "additionalProperties": True,
-        }
+        object_schema = OpenAPISchemaObject(
+            type="object",
+            additionalProperties=True,
+        )
         value_type = get_args(cls)[1]
         if value_type is not Any:
             object_schema["additionalProperties"] = get_or_create_schema(
@@ -69,14 +70,20 @@ def get_or_create_schema(
             return {"type": "boolean"}
         else:
             return {"type": "string", "enum": enum}
+    elif type(cls) is TypeAliasType:
+        name = internal_create_unique_name(cls, cls.__name__, openapi, types)
+        openapi["components"]["schemas"][name] = get_or_create_schema(
+            cls.__value__, openapi, types
+        )
+        return {"$ref": f"#/components/schemas/{name}"}
     else:
-        name = internal_create_unque_name(cls, openapi, types)
-        class_schema: OpenAPISchemaObject = {
-            "type": "object",
-            "properties": {},
-            "required": [],
-            "additionalProperties": False,
-        }
+        name = internal_create_unique_name(cls, cls.__name__, openapi, types)
+        class_schema = OpenAPISchemaObject(
+            type="object",
+            properties={},
+            required=[],
+            additionalProperties=False,
+        )
         openapi["components"]["schemas"][name] = class_schema
 
         for [key, item] in get_type_hints(cls).items():
@@ -92,20 +99,20 @@ def get_or_create_schema(
         return {"$ref": f"#/components/schemas/{name}"}
 
 
-def internal_create_unque_name(
-    cls: Type, openapi: OpenAPI, types: dict[Type, str]
+def internal_create_unique_name(
+    cls: Type, name: str, openapi: OpenAPI, types: dict[Type, str]
 ) -> str:
     if "components" not in openapi:
         openapi["components"] = {}
     if "schemas" not in openapi["components"]:
         openapi["components"]["schemas"] = {}
 
-    name = cls.__name__
+    new_name = name
     count = 0
-    while name in openapi["components"]["schemas"]:
-        name = f"{cls.__name__}{count}"
+    while new_name in openapi["components"]["schemas"]:
+        new_name = f"{name}{count}"
         count += 1
 
-    types[cls] = name
+    types[cls] = new_name
 
-    return name
+    return new_name
