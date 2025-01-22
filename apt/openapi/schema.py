@@ -84,11 +84,11 @@ def get_or_create_schema(
                 class_schema["properties"][key] = get_or_create_schema(
                     item.__type__, openapi, types
                 )
-                class_schema["required"].append(key)
             else:
                 class_schema["properties"][key] = get_or_create_schema(
                     item, openapi, types
                 )
+                class_schema["required"].append(key)
         return {"$ref": f"#/components/schemas/{name}"}
 
 
