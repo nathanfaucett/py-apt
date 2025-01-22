@@ -30,7 +30,5 @@ from .spec import (
 )
 from .openapi import openapi
 from .schema import (
-    get_or_create_component,
-    is_primitive_schema,
-    type_to_schema,
+    get_or_create_schema,
 )

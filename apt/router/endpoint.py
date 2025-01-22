@@ -14,7 +14,7 @@ from apt.openapi import (
     OpenAPIMethod,
     OpenAPISchemaArray,
     OpenAPI,
-    get_or_create_component,
+    get_or_create_schema,
 )
 from apt import to_camel_case
 
@@ -78,7 +78,7 @@ def endpoint_body_into_openapi(
         return {
             "content": {
                 "application/json": {
-                    "schema": get_or_create_component(endpoint_body, openapi, types)
+                    "schema": get_or_create_schema(endpoint_body, openapi, types)
                 }
             }
         }
@@ -87,7 +87,7 @@ def endpoint_body_into_openapi(
         return {
             "content": {
                 content_type: {
-                    "schema": get_or_create_component(endpoint_body[1], openapi, types)
+                    "schema": get_or_create_schema(endpoint_body[1], openapi, types)
                 }
             }
         }
@@ -100,7 +100,7 @@ def endpoint_body_into_openapi(
         elif "items" in endpoint_body:
             endpoint_type = endpoint_body["items"]
             is_array = True
-        schema = get_or_create_component(endpoint_type, openapi, types)
+        schema = get_or_create_schema(endpoint_type, openapi, types)
         openapi_schema = schema
         if is_array:
             openapi_schema = OpenAPISchemaArray(

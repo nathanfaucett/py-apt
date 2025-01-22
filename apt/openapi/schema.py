@@ -1,61 +1,31 @@
+from types import NoneType, UnionType
 from typing import (
+    Literal,
     NotRequired,
     Type,
+    Union,
     get_args,
+    get_origin,
     get_type_hints,
 )
 
-from apt.openapi.spec import OpenAPI, OpenAPISchema, OpenAPISchemaObject
+from apt.openapi.spec import (
+    OpenAPI,
+    OpenAPISchema,
+    OpenAPISchemaObject,
+    OpenAPISchemaArray,
+    OpenAPISchemaOneOf,
+)
+from typing import Any
 
 
-def get_or_create_component(
+def get_or_create_schema(
     cls: Type, openapi: OpenAPI, types: dict[Type, str]
 ) -> OpenAPISchema:
-    if is_primitive_schema(cls):
-        return type_to_schema(cls)
-
     name = types.get(cls)
-    if name is None:
-        if "components" not in openapi:
-            openapi["components"] = {}
-        if "schemas" not in openapi["components"]:
-            openapi["components"]["schemas"] = {}
-
-        name = cls.__name__
-        count = 0
-        while name in openapi["components"]["schemas"]:
-            name = f"{cls.__name__}{count}"
-            count += 1
-
-        types[cls] = name
-
-        schema = type_to_schema(cls)
-        openapi["components"]["schemas"][name] = schema
-
-    return {"$ref": f"#/components/schemas/{name}"}
-
-
-def is_primitive_schema(
-    cls: Type,
-) -> bool:
-    if cls is int:
-        return True
-    elif cls is float:
-        return True
-    elif cls is str:
-        return True
-    elif cls is bool:
-        return True
-    elif cls is list:
-        return True
-    elif cls is dict:
-        return True
-    else:
-        return False
-
-
-def type_to_schema(cls: Type) -> OpenAPISchema:
-    if cls is int:
+    if name is not None:
+        return {"$ref": f"#/components/schemas/{name}"}
+    elif cls is int:
         return {"type": "integer"}
     elif cls is float:
         return {"type": "number"}
@@ -63,40 +33,79 @@ def type_to_schema(cls: Type) -> OpenAPISchema:
         return {"type": "string"}
     elif cls is bool:
         return {"type": "boolean"}
-    elif cls is list:
-        return {"type": "array"}
-    elif cls is dict:
-        return {"type": "object", "additionalProperties": True}
+    elif cls is Any:
+        return {}
+    elif cls is NoneType:
+        return {"nullable": True}
+    elif get_origin(cls) is list:
+        array_schema: OpenAPISchemaArray = {"type": "array"}
+        list_type = get_args(cls)[0]
+        if list_type is not Any:
+            array_schema["items"] = get_or_create_schema(list_type, openapi, types)
+        return array_schema
+    elif get_origin(cls) is dict:
+        object_schema: OpenAPISchemaObject = {
+            "type": "object",
+            "additionalProperties": True,
+        }
+        value_type = get_args(cls)[1]
+        if value_type is not Any:
+            object_schema["additionalProperties"] = get_or_create_schema(
+                value_type, openapi, types
+            )
+        return object_schema
+    elif isinstance(cls, UnionType) or get_origin(cls) is Union:
+        return OpenAPISchemaOneOf(
+            oneOf=[get_or_create_schema(item, openapi, types) for item in get_args(cls)]
+        )
+    elif get_origin(cls) is Literal:
+        enum = list(get_args(cls))
+        literal_type = type(enum[0]) if len(enum) > 0 else None
+        if literal_type is int:
+            return {"type": "integer", "enum": enum}
+        elif literal_type is float:
+            return {"type": "number", "enum": enum}
+        elif literal_type is bool:
+            return {"type": "boolean"}
+        else:
+            return {"type": "string", "enum": enum}
     else:
-        schema: OpenAPISchemaObject = {
+        name = internal_create_unque_name(cls, openapi, types)
+        class_schema: OpenAPISchemaObject = {
             "type": "object",
             "properties": {},
             "required": [],
+            "additionalProperties": False,
         }
+        openapi["components"]["schemas"][name] = class_schema
+
         for [key, item] in get_type_hints(cls).items():
-            item_schema: OpenAPISchema
             if item is NotRequired:
-                item_schema = type_to_schema(item.__type__)
+                class_schema["properties"][key] = get_or_create_schema(
+                    item.__type__, openapi, types
+                )
+                class_schema["required"].append(key)
             else:
-                (item_types, is_nonable) = extract_types(item)
-                if len(item_types) == 1:
-                    item_schema = type_to_schema(item_types[0])
-                elif len(item_types) > 1:
-                    item_schema = {"oneOf": [type_to_schema(v) for v in item_types]}
-                else:
-                    item_schema = type_to_schema(item)
-                if not is_nonable:
-                    schema["required"].append(key)
-            schema["properties"][key] = item_schema
-        return schema
+                class_schema["properties"][key] = get_or_create_schema(
+                    item, openapi, types
+                )
+        return {"$ref": f"#/components/schemas/{name}"}
 
 
-def extract_types(cls: Type) -> tuple[list[Type], bool]:
-    types = []
-    is_nonable = False
-    for value in get_args(cls):
-        if value is type(None):
-            is_nonable = True
-            continue
-        types.append(value)
-    return (types, is_nonable)
+def internal_create_unque_name(
+    cls: Type, openapi: OpenAPI, types: dict[Type, str]
+) -> str:
+    if "components" not in openapi:
+        openapi["components"] = {}
+    if "schemas" not in openapi["components"]:
+        openapi["components"]["schemas"] = {}
+
+    name = cls.__name__
+    count = 0
+    while name in openapi["components"]["schemas"]:
+        name = f"{cls.__name__}{count}"
+        count += 1
+
+    types[cls] = name
+
+    return name

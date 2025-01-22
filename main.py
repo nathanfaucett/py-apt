@@ -5,6 +5,7 @@ from msgspec import Struct
 
 from apt.extract import JSON, Query, Path
 from apt.openapi import openapi, OpenAPIInfo
+from apt.openapi.spec import OpenAPI
 from apt.router import endpoint, Router
 from sqlx import sqlx
 
@@ -65,6 +66,7 @@ async def test_endpoint(
 @endpoint(
     path="/openapi.json",
     method="GET",
+    responses={200: ("application/json", OpenAPI)},
 )
 async def openapi_json() -> Response:
     return Response(

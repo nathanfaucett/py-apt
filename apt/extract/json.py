@@ -4,7 +4,7 @@ from aiohttp.web import Response
 from result import Err, Result, Ok
 
 from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
-from apt.openapi import get_or_create_component
+from apt.openapi import get_or_create_schema
 
 T = TypeVar("T", bound=Struct)
 
@@ -37,7 +37,7 @@ class JSON(Generic[T], Extract[Response]):
         types = kwargs["types"]
 
         json_type = get_args(cls)[0]
-        schema = get_or_create_component(json_type, openapi, types)
+        schema = get_or_create_schema(json_type, openapi, types)
         if "requestBody" not in openapi_route:
             openapi_route["requestBody"] = {"content": {}}
         if "application/json" not in openapi_route["requestBody"]["content"]:

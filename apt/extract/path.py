@@ -12,7 +12,7 @@ from result import Err, Result, Ok
 
 from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
 
-from apt.openapi.schema import get_or_create_component
+from apt.openapi.schema import get_or_create_schema
 from apt import str_to_python_value
 
 T = TypeVar("T")
@@ -67,7 +67,7 @@ class Path(Generic[T], Extract[Response]):
                 {
                     "in": "path",
                     "name": names[i],
-                    "schema": get_or_create_component(path_type, openapi, types),
+                    "schema": get_or_create_schema(path_type, openapi, types),
                 }
             )
 
