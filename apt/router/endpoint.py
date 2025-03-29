@@ -1,6 +1,7 @@
 from inspect import isclass
 from typing import (
     Any,
+    Literal,
     NotRequired,
     TypeGuard,
     TypedDict,
@@ -53,11 +54,15 @@ class EndpointBodyDict(TypedDict):
     required: NotRequired[list[str]]
 
 
-def is_array_endpoint_key(key: str) -> bool:
-    return key in ["items", "unique_items", "min_items", "max_items"]
+def is_array_endpoint_key(
+    key: str,
+) -> TypeGuard[Literal["unique_items", "min_items", "max_items"]]:
+    return key in ["unique_items", "min_items", "max_items"]
 
 
-def is_type_endpoint_key(key: str) -> bool:
+def is_type_endpoint_key(
+    key: str,
+) -> TypeGuard[Literal["type", "items", "content_type"]]:
     return key in ["type", "items", "content_type"]
 
 
@@ -67,7 +72,7 @@ def is_endpoint_body_dict(obj) -> TypeGuard[EndpointBodyDict]:
     )
 
 
-EndpointBody = Union[Type, tuple[str, Type], EndpointBodyDict, OpenAPIBody]
+EndpointBody = Union[Type, tuple[str, Type], EndpointBodyDict, OpenAPIBody, None]
 EndpointResponses = dict[int, EndpointBody]
 
 
@@ -109,15 +114,19 @@ def endpoint_body_into_openapi(
             )
 
         for key, value in endpoint_body.items():
+            key = to_camel_case(key)
+
             if is_type_endpoint_key(key):
                 continue
 
             if is_array_endpoint_key(key):
-                openapi_schema[to_camel_case(key)] = value
+                openapi_schema[key] = value
             else:
-                schema[to_camel_case(key)] = value
+                schema[key] = value
 
         return {"content": {content_type: {"schema": openapi_schema}}}
+    elif endpoint_body is None:
+        return {"content": {}}
     else:
         return endpoint_body
 

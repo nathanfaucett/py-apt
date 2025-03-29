@@ -1,6 +1,5 @@
-from json import dumps
 from typing import Generic, TypeVar, Unpack, get_args, Type
-from msgspec import Struct, MsgspecError, json
+from pydantic import BaseModel, ValidationError
 from aiohttp.web import Response
 from multidict import MultiDictProxy
 from result import Err, Result, Ok
@@ -9,7 +8,7 @@ from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
 from apt.openapi import get_or_create_schema
 from apt import str_to_python_value
 
-T = TypeVar("T", bound=Struct)
+T = TypeVar("T", bound=BaseModel)
 
 
 class Query(Generic[T], Extract[Response]):
@@ -30,8 +29,8 @@ class Query(Generic[T], Extract[Response]):
             query_type = get_args(cls)[0]
             value = Query.struct_from_query_string(request.url.query, query_type)
             return Ok(Query(value))
-        except MsgspecError as err:
-            return Err(Response(status=400, text=str(err)))
+        except ValidationError as err:
+            return Err(Response(status=400, text=err.json()))
 
     @staticmethod
     def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
@@ -60,4 +59,4 @@ class Query(Generic[T], Extract[Response]):
                 args[key] = str_to_python_value(value[0])
             else:
                 args[key] = [str_to_python_value(element) for element in value]
-        return json.decode(dumps(args), type=query_type)
+        return query_type.model_validate(args)

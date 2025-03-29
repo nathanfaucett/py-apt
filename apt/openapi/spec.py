@@ -1,6 +1,4 @@
-from enum import Enum
 from typing import Any, Literal, NotRequired, TypedDict, Union
-
 
 type OpenAPIIn = Literal["path", "query", "header"]
 type OpenAPIStringFormat = Union[
@@ -12,6 +10,8 @@ type OpenAPIFormat = Union[OpenAPIStringFormat, OpenAPINumberFormat]
 type OpenAPIMethod = Literal[
     "get", "head", "options", "post", "put", "patch", "delete", "trace"
 ]
+
+type OpenAPIBinaryFormat = str
 
 
 class OpenAPISchemaBase(TypedDict):

@@ -1,12 +1,12 @@
 from typing import Generic, TypeVar, Unpack, get_args
-from msgspec import Struct, json, MsgspecError
+from pydantic import BaseModel, ValidationError
 from aiohttp.web import Response
 from result import Err, Result, Ok
 
 from apt.extract.extract import Extract, ExtractIntoOpenAPIKWArgs, ExtractKWArgs
 from apt.openapi import get_or_create_schema
 
-T = TypeVar("T", bound=Struct)
+T = TypeVar("T", bound=BaseModel)
 
 
 class JSON(Generic[T], Extract[Response]):
@@ -25,10 +25,10 @@ class JSON(Generic[T], Extract[Response]):
         request = kwargs["request"]
         try:
             json_type = get_args(cls)[0]
-            value = json.decode(await request.read(), type=json_type)
+            value = json_type.model_validate_json(await request.read())
             return Ok(JSON(value))
-        except MsgspecError as err:
-            return Err(Response(status=400, text=str(err)))
+        except ValidationError as err:
+            return Err(Response(status=400, text=err.json()))
 
     @staticmethod
     def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):

@@ -35,5 +35,4 @@ class Extract(ABC, Generic[E]):
 
     @staticmethod
     @abstractmethod
-    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]):
-        pass
+    def into_openapi(cls, **kwargs: Unpack[ExtractIntoOpenAPIKWArgs]): ...

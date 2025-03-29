@@ -1,8 +1,0 @@
-[project]
-name = "py-sqlx"
-version = "0.1.0"
-description = "SQLx for python"
-readme = "README.md"
-requires-python = ">=3.12"
-authors = [{ name = "Nathan Faucett", email = "nathanfaucett@gmail.com" }]
-dependencies = []
